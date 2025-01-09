@@ -1,17 +1,21 @@
-import * as Carousel from "./Carousel.js";
-import axios from "axios";
+import * as Carousel from './Carousel.js';
+// You have axios, you don't need to import it
+console.log(axios);
 
 // The breed selection input element.
-const breedSelect = document.getElementById("breedSelect");
+const breedSelect = document.getElementById('breedSelect');
 // The information section div element.
-const infoDump = document.getElementById("infoDump");
+const infoDump = document.getElementById('infoDump');
 // The progress bar div element.
-const progressBar = document.getElementById("progressBar");
-// The get favourites button element.
-const getFavouritesBtn = document.getElementById("getFavouritesBtn");
+const progressBar = document.getElementById('progressBar');
+// The get favorites button element.
+const getFavoritesBtn = document.getElementById('getFavoritesBtn');
+
 
 // Step 0: Store your API key here for reference and easy access.
-const API_KEY = "";
+const API_KEY = 'live_MjXr0zrmGKhKtGRhsUIWRxVSuPd5EyUgF9fM5JMpWmqY2O3FV2A3n87mBPuzDiAc';
+
+
 
 /**
  * 1. Create an async function "initialLoad" that does the following:
@@ -21,6 +25,28 @@ const API_KEY = "";
  *  - Each option should display text equal to the name of the breed.
  * This function should execute immediately.
  */
+
+async function initialLoad() {
+  try {
+    const res = await fetch('https://api.thecatapi.com/v1/breeds');    //return a response object
+    const data = await res.json();
+    console.log(data);
+
+    //create option tags
+    for (const breed of data) {
+      const option = document.createElement('option');
+      option.setAttribute("value", breed.id)
+      option.textContent = breed.name
+      breedSelect.append(option)
+
+    }
+
+  } catch (err) {
+    console.log(err);
+  }
+}
+
+initialLoad();
 
 /**
  * 2. Create an event handler for breedSelect that does the following:
@@ -65,7 +91,7 @@ const API_KEY = "";
  * - Research the axios onDownloadProgress config option.
  * - Create a function "updateProgress" that receives a ProgressEvent object.
  *  - Pass this function to the axios onDownloadProgress config option in your event handler.
- * - console.log your ProgressEvent object within updateProgess, and familiarize yourself with its structure.
+ * - console.log your ProgressEvent object within updateProgress, and familiarize yourself with its structure.
  *  - Update the progress of the request using the properties you are given.
  * - Note that we are not downloading a lot of data, so onDownloadProgress will likely only fire
  *   once or twice per request to this API. This is still a concept worth familiarizing yourself
@@ -78,25 +104,25 @@ const API_KEY = "";
  * - In your response interceptor, remove the progress cursor style from the body element.
  */
 /**
- * 8. To practice posting data, we'll create a system to "favourite" certain images.
+ * 8. To practice posting data, we'll create a system to "favorite" certain images.
  * - The skeleton of this function has already been created for you.
  * - This function is used within Carousel.js to add the event listener as items are created.
  *  - This is why we use the export keyword for this function.
- * - Post to the cat API's favourites endpoint with the given ID.
+ * - Post to the cat API's favorites endpoint with the given ID.
  * - The API documentation gives examples of this functionality using fetch(); use Axios!
- * - Add additional logic to this function such that if the image is already favourited,
- *   you delete that favourite using the API, giving this function "toggle" functionality.
+ * - Add additional logic to this function such that if the image is already favorite,
+ *   you delete that favorite using the API, giving this function "toggle" functionality.
  * - You can call this function by clicking on the heart at the top right of any image.
  */
-export async function favourite(imgId) {
+export async function favorite(imgId) {
   // your code here
 }
 
 /**
- * 9. Test your favourite() function by creating a getFavourites() function.
- * - Use Axios to get all of your favourites from the cat API.
- * - Clear the carousel and display your favourites when the button is clicked.
- *  - You will have to bind this event listener to getFavouritesBtn yourself.
+ * 9. Test your favorite() function by creating a getFavorites() function.
+ * - Use Axios to get all of your favorites from the cat API.
+ * - Clear the carousel and display your favorites when the button is clicked.
+ *  - You will have to bind this event listener to getFavoritesBtn yourself.
  *  - Hint: you already have all of the logic built for building a carousel.
  *    If that isn't in its own function, maybe it should be so you don't have to
  *    repeat yourself in this section.
