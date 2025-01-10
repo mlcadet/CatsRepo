@@ -16,7 +16,7 @@ const getFavoritesBtn = document.getElementById('getFavoritesBtn');
 
 
 // Step 0: Store your API key here for reference and easy access.
-const API_KEY = 'live_MjXr0zrmGKhKtGRhsUIWRxVSuPd5EyUgF9fM5JMpWmqY2O3FV2A3n87mBPuzDiAc';
+const API_KEY = 'live_HHYLYmDU3pTdHhk8ABZwJymeRFxh19hJFoISegToNgha6813dpnKd7VN2BpCN7wZ';
 
 
 
@@ -29,27 +29,21 @@ const API_KEY = 'live_MjXr0zrmGKhKtGRhsUIWRxVSuPd5EyUgF9fM5JMpWmqY2O3FV2A3n87mBP
  * This function should execute immediately.
  */
 
-async function initialLoad() {
-  try {
-    const res = await fetch('https://api.thecatapi.com/v1/breeds');    //return a response object
-    const data = await res.json();
-    console.log(data);
-
-    //create option tags
-    for (const breed of data) {
-      const option = document.createElement('option');
-      option.setAttribute("value", breed.id)
-      option.textContent = breed.name
-      breedSelect.append(option)
-
+async function populateBreedDropdown() {
+    try {
+      const { data: breeds } = await axios.get('/breeds');
+      breeds.forEach((breed) => {
+        const option = document.createElement("option");
+        option.value = breed.id;
+        option.textContent = breed.name;
+        breedSelect.appendChild(option);
+      });
+      handleBreedSelect({ target: breedSelect });
+    } catch (error) {
+      console.error("Error fetching breeds:", error);
     }
-
-  } catch (err) {
-    console.log(err);
   }
-}
-
-initialLoad();
+  
 
 /**
  * 2. Create an event handler for breedSelect that does the following:
@@ -69,126 +63,51 @@ initialLoad();
 //function createCarouselItem(imgSrc: any, imgAlt: any, imgId: any): any 
 //Carousel.createCarouselItem()
 
+// 2.  Axios Interceptors for Timing & Progress
+      //Add interceptors to log request-response time and manage UI feedback:
+      //Add Interceptors:
 
-// breedSelect.addEventListener("change", handleSelect);
+    // 2.  Axios Interceptors for Timing & Progress
+      //Add interceptors to log request-response time and manage UI feedback:
+      //Add Interceptors:
 
-// Populate the breed dropdown on page load
-async function populateBreedDropdown() {
-  const breedSelect = document.getElementById("breedSelect");
-
-  try {
-    const response = await fetch("https://api.thecatapi.com/v1/breeds");
-    const breeds = await response.json();
-
-    // Populate dropdown options
-    breeds.forEach((breed) => {
-      const option = document.createElement("option");
-      option.value = breed.id; // API breed ID
-      option.textContent = breed.name; // Display name
-      breedSelect.appendChild(option);
-    });
-
-    // Trigger initial selection
-    handleBreedSelect({ target: breedSelect });
-  } catch (error) {
-    console.error("Error fetching breeds:", error);
-  }
-}
-
-// Handle breed selection and update carousel + infoDump
-async function handleBreedSelect(event) {
-  const breedId = event.target.value; // Get selected breed ID
-  const carouselContainer = document.getElementById("carousel");
-  const infoDump = document.getElementById("infoDump");
-  const getFavoritesId = 
-    
-   
-
-  // Clear existing content
-  carouselContainer.innerHTML = 
-  `
-  <div class=""carousel-control-prev">
-  ${ buttonHTML.join("")}
-  </div>
-  `;
-  infoDump.innerHTML = "";
-
-  try {
-    // Fetch breed-specific images
-    const response = await fetch(
-      `https://api.thecatapi.com/v1/images/search?breed_ids=${breedId}&limit=5`
-    );
-    const data = await response.json();
-
-    if (Array.isArray(data) && data.length > 0) {
-      // Populate carousel with images
-      data.forEach((item) => {
-        const carouselItem = document.createElement("div");
-        carouselItem.classList.add("carousel-item");
-        carouselItem.innerHTML = `
-          <img src="${item.url}" alt="${item.breeds[0]?.name || "Cat"}" />
-        `;
-        carouselContainer.appendChild(carouselItem);
-      });
-
-      // Update breed information in infoDump
-      const breedData = data[0]?.breeds[0];
-      if (breedData) {
-        infoDump.innerHTML = `
-          <h2>${breedData.name}</h2>
-          <p><strong>Origin:</strong> ${breedData.origin}</p>
-          <p><strong>Lifespan:</strong> ${breedData.life_span}</p>
-          <p><strong>Temperament:</strong> ${breedData.temperament}</p>
-          <p><strong>Description:</strong> ${breedData.description}</p>
-        `;
-      }
-
-      // Restart the carousel if needed
-      if (typeof Carousel !== "undefined" && typeof Carousel.start === "function") {
-        Carousel.start();
-      }
-    } else {
-      console.error("No data returned from the API for this breed.");
+axios.interceptors.request.use((config) => {
+    console.log(`Request started: ${config.url}`);
+    document.body.style.cursor = 'progress';
+    progressBar.style.width = '0%';
+    return config;
+  });
+  
+  axios.interceptors.response.use(
+    (response) => {
+      console.log(`Response received: ${response.config.url}`);
+      document.body.style.cursor = 'default';
+      progressBar.style.width = '100%';
+      return response;
+    },
+    (error) => {
+      document.body.style.cursor = 'default';
+      progressBar.style.width = '0%';
+      return Promise.reject(error);
     }
-  } catch (error) {
-    console.error("Error fetching breed data:", error);
+  );
+  
+          //Handle Download Progress:
+  function updateProgress(event) {
+    if (event.lengthComputable) {
+      const percentComplete = (event.loaded / event.total) * 100;
+      progressBar.style.width = `${percentComplete}%`;
+    }
   }
-}
-
-// Handle "Get Favorites" button click
-function handleGetFavorites() {
-  console.log("Get Favorites button clicked!");
-  // You can add functionality to retrieve and display favorite items here.
-}
-
-// Attach event listeners
-document.addEventListener("DOMContentLoaded", () => {
-  populateBreedDropdown();
-
-  const breedSelect = document.getElementById("breedSelect");
-  const getFavoritesBtn = document.getElementById("getFavoritesBtn");
-
-  breedSelect.addEventListener("change", handleBreedSelect);
-  getFavoritesBtn.addEventListener("click", handleGetFavorites);
-});
+  
+  axios.get('/breeds', { onDownloadProgress: updateProgress });
 
 
-
-
-
-/* at this point, you need to push your code up to your own github repo
-go to the folder you cloned in today, and clone your repo again and give it the name
-below (Javascript Axios Lab)
-Clone your own code and name it
-
-/**
+  /**
  * 3. Fork your own sandbox, creating a new one named "JavaScript Axios Lab."
  /* 
 
-
-*/
-/**
- * 4. Change all of your fetch() functions to axios!
+ 4. Change all of your fetch() functions to axios!
  * - axios has already been imported for you within index.js.
  * - If you've done everything correctly up to this point, this should be simple.
  * - If it is not simple, take a moment to re-evaluate your original code.
@@ -197,6 +116,70 @@ Clone your own code and name it
  *   send it manually with all of your requests! You can also set a default base URL!
  */
 
+ //3.  Post Favorite:
+    //Implement toggling favorites using Axios POST/DELETE requests.
+
+export async function favorite(imgId) {
+    try {
+      const { data } = await axios.post('/favorites', { image_id: imgId });
+      console.log('Favorite added:', data);
+    } catch (error) {
+      console.error('Error adding favorite:', error);
+    }
+  }
+  
+      //Toggle Modify the function to check if the image is already favorite
+  
+  export async function toggleFavorite(imgId) {
+    try {
+      const { data: favorites } = await axios.get('/favorites');
+      const favorite = favorites.find((fav) => fav.image_id === imgId);
+  
+      if (favorite) {
+        await axios.delete(`/favorites/${favorite.id}`);
+        console.log('Favorite removed:', favorite.id);
+      } else {
+        await axios.post('/favorites', { image_id: imgId });
+        console.log('Favorite added:', imgId);
+      }
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+    }
+  }
+  
+  
+  //Bind the heart icon to this function
+  
+  document.querySelectorAll('.favorite-button').forEach((button) => {
+    button.addEventListener('click', () => {
+      const imgId = button.getAttribute('data-img-id');
+      toggleFavorite(imgId);
+    });
+  });
+  
+
+/*4. Change all of your fetch() functions to axios!
+ * - axios has already been imported for you within index.js.
+ * - If you've done everything correctly up to this point, this should be simple.
+ * - If it is not simple, take a moment to re-evaluate your original code.
+ * - Hint: Axios has the ability to set default headers. Use this to your advantage
+ *   by setting a default header with your API key so that you do not have to
+ *   send it manually with all of your requests! You can also set a default base URL!
+ */
+
+//4.  Display Favorites
+      // Create a function to fetch and display favorite images
+
+      async function displayFavorites() {
+        try {
+          const { data: favorites } = await axios.get('/favourites');
+          const images = favorites.map((fav) => fav.image);
+          updateCarousel(images);
+        } catch (error) {
+          console.error('Error fetching favorites:', error);
+        }
+      }
+      
 
 /**
  * 5. Add axios interceptors to log the time between request and response to the console.
@@ -205,6 +188,20 @@ Clone your own code and name it
  * - As an added challenge, try to do this on your own without referencing the lesson material.
  */
 
+
+//5  Update Carousel Dynamically
+function updateCarousel(images) {
+    carouselInner.innerHTML = '';
+    images.forEach((img, index) => {
+      const carouselItem = document.createElement('div');
+      carouselItem.classList.add('carousel-item');
+      if (index === 0) carouselItem.classList.add('active');
+      carouselItem.innerHTML = `<img src="${img.url}" class="d-block w-100" alt="Cat">`;
+      carouselInner.appendChild(carouselItem);
+    });
+  }
+  
+  
 
 /**
  * 6. Next, we'll create a progress bar to indicate the request is in progress.
@@ -242,25 +239,25 @@ Clone your own code and name it
 
 
 export async function favorite(imgId) {
-  // your code here
-}
-
-
-
-/**
- * 9. Test your favorite() function by creating a getFavorites() function.
- * - Use Axios to get all of your favorites from the cat API.
- * - Clear the carousel and display your favorites when the button is clicked.
- *  - You will have to bind this event listener to getFavoritesBtn yourself.
- *  - Hint: you already have all of the logic built for building a carousel.
- *    If that isn't in its own function, maybe it should be so you don't have to
- *    repeat yourself in this section.
- */
-
-// /*
-//  * 10. Test your site, thoroughly!
-//  * - What happens when you try to load the Malayan breed?
-//  *  - If this is working, good job! If not, look for the reason why and fix it!
-//  * - Test other breeds as well. Not every breed has the same data available, so
-//  *   your code should account for this.
-//  * */
+    // your code here
+  }
+  
+  
+  
+  /**
+   * 9. Test your favorite() function by creating a getFavorites() function.
+   * - Use Axios to get all of your favorites from the cat API.
+   * - Clear the carousel and display your favorites when the button is clicked.
+   *  - You will have to bind this event listener to getFavoritesBtn yourself.
+   *  - Hint: you already have all of the logic built for building a carousel.
+   *    If that isn't in its own function, maybe it should be so you don't have to
+   *    repeat yourself in this section.
+   */
+  
+  // /*
+  //  * 10. Test your site, thoroughly!
+  //  * - What happens when you try to load the Malayan breed?
+  //  *  - If this is working, good job! If not, look for the reason why and fix it!
+  //  * - Test other breeds as well. Not every breed has the same data available, so
+  //  *   your code should account for this.
+  //  * */
