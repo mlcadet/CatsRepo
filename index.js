@@ -4,10 +4,13 @@ console.log(axios);
 
 // The breed selection input element.
 const breedSelect = document.getElementById('breedSelect');
+
 // The information section div element.
 const infoDump = document.getElementById('infoDump');
+
 // The progress bar div element.
 const progressBar = document.getElementById('progressBar');
+
 // The get favorites button element.
 const getFavoritesBtn = document.getElementById('getFavoritesBtn');
 
@@ -63,9 +66,127 @@ initialLoad();
  * - Add a call to this function to the end of your initialLoad function above to create the initial carousel.
  */
 
+//function createCarouselItem(imgSrc: any, imgAlt: any, imgId: any): any 
+//Carousel.createCarouselItem()
+
+
+// breedSelect.addEventListener("change", handleSelect);
+
+// Populate the breed dropdown on page load
+async function populateBreedDropdown() {
+  const breedSelect = document.getElementById("breedSelect");
+
+  try {
+    const response = await fetch("https://api.thecatapi.com/v1/breeds");
+    const breeds = await response.json();
+
+    // Populate dropdown options
+    breeds.forEach((breed) => {
+      const option = document.createElement("option");
+      option.value = breed.id; // API breed ID
+      option.textContent = breed.name; // Display name
+      breedSelect.appendChild(option);
+    });
+
+    // Trigger initial selection
+    handleBreedSelect({ target: breedSelect });
+  } catch (error) {
+    console.error("Error fetching breeds:", error);
+  }
+}
+
+// Handle breed selection and update carousel + infoDump
+async function handleBreedSelect(event) {
+  const breedId = event.target.value; // Get selected breed ID
+  const carouselContainer = document.getElementById("carousel");
+  const infoDump = document.getElementById("infoDump");
+  const getFavoritesId = 
+    
+   
+
+  // Clear existing content
+  carouselContainer.innerHTML = 
+  `
+  <div class=""carousel-control-prev">
+  ${ buttonHTML.join("")}
+  </div>
+  `;
+  infoDump.innerHTML = "";
+
+  try {
+    // Fetch breed-specific images
+    const response = await fetch(
+      `https://api.thecatapi.com/v1/images/search?breed_ids=${breedId}&limit=5`
+    );
+    const data = await response.json();
+
+    if (Array.isArray(data) && data.length > 0) {
+      // Populate carousel with images
+      data.forEach((item) => {
+        const carouselItem = document.createElement("div");
+        carouselItem.classList.add("carousel-item");
+        carouselItem.innerHTML = `
+          <img src="${item.url}" alt="${item.breeds[0]?.name || "Cat"}" />
+        `;
+        carouselContainer.appendChild(carouselItem);
+      });
+
+      // Update breed information in infoDump
+      const breedData = data[0]?.breeds[0];
+      if (breedData) {
+        infoDump.innerHTML = `
+          <h2>${breedData.name}</h2>
+          <p><strong>Origin:</strong> ${breedData.origin}</p>
+          <p><strong>Lifespan:</strong> ${breedData.life_span}</p>
+          <p><strong>Temperament:</strong> ${breedData.temperament}</p>
+          <p><strong>Description:</strong> ${breedData.description}</p>
+        `;
+      }
+
+      // Restart the carousel if needed
+      if (typeof Carousel !== "undefined" && typeof Carousel.start === "function") {
+        Carousel.start();
+      }
+    } else {
+      console.error("No data returned from the API for this breed.");
+    }
+  } catch (error) {
+    console.error("Error fetching breed data:", error);
+  }
+}
+
+// Handle "Get Favorites" button click
+function handleGetFavorites() {
+  console.log("Get Favorites button clicked!");
+  // You can add functionality to retrieve and display favorite items here.
+}
+
+// Attach event listeners
+document.addEventListener("DOMContentLoaded", () => {
+  populateBreedDropdown();
+
+  const breedSelect = document.getElementById("breedSelect");
+  const getFavoritesBtn = document.getElementById("getFavoritesBtn");
+
+  breedSelect.addEventListener("change", handleBreedSelect);
+  getFavoritesBtn.addEventListener("click", handleGetFavorites);
+});
+
+
+
+
+
+/* at this point, you need to push your code up to your own github repo
+go to the folder you cloned in today, and clone your repo again and give it the name
+below (Javascript Axios Lab)
+Clone your own code and name it
+
 /**
  * 3. Fork your own sandbox, creating a new one named "JavaScript Axios Lab."
- */
+ /* 
+
+
+*/
 /**
  * 4. Change all of your fetch() functions to axios!
  * - axios has already been imported for you within index.js.
@@ -75,12 +196,15 @@ initialLoad();
  *   by setting a default header with your API key so that you do not have to
  *   send it manually with all of your requests! You can also set a default base URL!
  */
+
+
 /**
  * 5. Add axios interceptors to log the time between request and response to the console.
  * - Hint: you already have access to code that does this!
  * - Add a console.log statement to indicate when requests begin.
  * - As an added challenge, try to do this on your own without referencing the lesson material.
  */
+
 
 /**
  * 6. Next, we'll create a progress bar to indicate the request is in progress.
@@ -114,9 +238,14 @@ initialLoad();
  *   you delete that favorite using the API, giving this function "toggle" functionality.
  * - You can call this function by clicking on the heart at the top right of any image.
  */
+
+
+
 export async function favorite(imgId) {
   // your code here
 }
+
+
 
 /**
  * 9. Test your favorite() function by creating a getFavorites() function.
@@ -128,10 +257,10 @@ export async function favorite(imgId) {
  *    repeat yourself in this section.
  */
 
-/**
- * 10. Test your site, thoroughly!
- * - What happens when you try to load the Malayan breed?
- *  - If this is working, good job! If not, look for the reason why and fix it!
- * - Test other breeds as well. Not every breed has the same data available, so
- *   your code should account for this.
- */
+// /*
+//  * 10. Test your site, thoroughly!
+//  * - What happens when you try to load the Malayan breed?
+//  *  - If this is working, good job! If not, look for the reason why and fix it!
+//  * - Test other breeds as well. Not every breed has the same data available, so
+//  *   your code should account for this.
+//  * */
