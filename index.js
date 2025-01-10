@@ -19,93 +19,148 @@ const getFavoritesBtn = document.getElementById('getFavoritesBtn');
 const API_KEY = 'live_MjXr0zrmGKhKtGRhsUIWRxVSuPd5EyUgF9fM5JMpWmqY2O3FV2A3n87mBPuzDiAc';
 
 
+//1.  Base URL and Headers for Axios:
 
-// Add event listener to the breed dropdown
-document.getElementById("breedSelect").addEventListener("change", handleSelect);
+axios.defaults.baseURL = "https://api.thecatapi.com/v1/images/search?limit=10&breed_ids=beng&api_key=REPLACE_ME";
+axios.defaults.headers.common["x-api-key"] = API_KEY;
 
-async function handleSelect(event) {
-  const breedId = event.target.value; // Get selected breed ID
-  console.log(`Selected Breed ID: ${breedId}`);
 
-  // Get DOM elements
-  const carouselInner = document.getElementById("carouselInner");
-  const infoDump = document.getElementById("infoDump");
+//2. Populate Breed Dropdown
 
-  // Ensure required elements exist
-  if (!carouselInner || !infoDump) {
-    console.error("Required DOM elements are missing.");
-    return;
-  }
 
-  // Clear the carousel and infoDump
-  carouselInner.innerHTML = "";
-  infoDump.innerHTML = "";
-
-  try {
-    // Fetch breed data
-    const apiUrl = `https://api.thecatapi.com/v1/images/search?breed_ids=${breedId}&limit=5`;
-    const response = await fetch(apiUrl, {
-      headers: {
-        "content-type": "application/json",
-        "x-api-key": "YOUR_API_KEY_HERE", // Replace with your actual API key
-      },
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-
-      if (data.length > 0) {
-        // Populate the carousel with images
-        data.forEach((item, index) => {
-          const carouselItemTemplate = document.getElementById("carouselItemTemplate");
-          const clone = carouselItemTemplate.content.cloneNode(true);
-
-          // Update image and attributes
-          const imgElement = clone.querySelector("img");
-          imgElement.src = item.url;
-          imgElement.alt = `Image of a ${item.breeds[0]?.name || "cat"}`;
-
-          const favButton = clone.querySelector(".favorite-button");
-          favButton.setAttribute("data-img-id", item.id);
-
-          // Set the first item as active
-          if (index === 0) {
-            clone.querySelector(".carousel-item").classList.add("active");
-          }
-
-          carouselInner.appendChild(clone);
-        });
-
-        // Populate the infoDump with breed details
-        const breedData = data[0]?.breeds[0];
-        if (breedData) {
-          infoDump.innerHTML = `
-            <h2>${breedData.name}</h2>
-            <p><strong>Origin:</strong> ${breedData.origin}</p>
-            <p><strong>Lifespan:</strong> ${breedData.life_span}</p>
-            <p><strong>Temperament:</strong> ${breedData.temperament}</p>
-            <p><strong>Description:</strong> ${breedData.description}</p>
-          `;
-        } else {
-          infoDump.innerHTML = `<p>No breed details available.</p>`;
-        }
-      } else {
-        console.error("No data returned for this breed.");
-        infoDump.innerHTML = `<p>No images found for the selected breed.</p>`;
+async function populateBreedDropdown() {
+    try {
+      const { data: breeds } = await axios.get('/breeds');
+      breeds.forEach((breed) => {
+        const option = document.createElement("option");
+        option.value = breed.id;
+        option.textContent = breed.name;
+        breedSelect.appendChild(option);
+      });
+  
+      // Load the initial carousel for the first breed in the list
+      if (breeds.length > 0) {
+        breedSelect.value = breeds[0].id; // Set default selection
+        handleBreedSelect({ target: breedSelect }); // Trigger initial load
       }
-    } else {
-      console.error("Failed to fetch breed data.");
-      infoDump.innerHTML = `<p>Failed to fetch breed information. Please try again later.</p>`;
+    } catch (error) {
+      console.error("Error fetching breeds:", error);
     }
-  } catch (error) {
-    console.error("Error fetching breed data:", error);
-    infoDump.innerHTML = `<p>Something went wrong. Please try again later.</p>`;
   }
-}
+
+
+  //3. Handle Breed Selection
+  async function handleBreedSelect(event) {
+    const breedId = event.target.value; // Get selected breed ID
+    const carouselInner = document.getElementById("carouselInner");
+    const infoDump = document.getElementById("infoDump");
+  
+    if (!carouselInner || !infoDump) {
+      console.error("Required DOM elements are missing.");
+      return;
+    }
+  
+    // Clear previous content
+    carouselInner.innerHTML = "";
+    infoDump.innerHTML = "";
+  
+    try {
+      const { data } = await axios.get(`/images/search?breed_ids=${breedId}&limit=10`);
+      data.forEach((item, index) => {
+        const carouselItem = document.createElement("div");
+        carouselItem.classList.add("carousel-item");
+        if (index === 0) carouselItem.classList.add("active");
+  
+        carouselItem.innerHTML = `
+          <img src="${item.url}" class="d-block w-100" alt="Cat image" />
+        `;
+        carouselInner.appendChild(carouselItem);
+      });
+  
+      // Update breed details
+      const breedData = data[0]?.breeds[0];
+      if (breedData) {
+        infoDump.innerHTML = `
+          <h2>${breedData.name}</h2>
+          <p><strong>Origin:</strong> ${breedData.origin}</p>
+          <p><strong>Lifespan:</strong> ${breedData.life_span}</p>
+          <p><strong>Temperament:</strong> ${breedData.temperament}</p>
+          <p><strong>Description:</strong> ${breedData.description}</p>
+        `;
+      } else {
+        infoDump.innerHTML = `<p>No additional breed information available.</p>`;
+      }
+    } catch (error) {
+      console.error("Error fetching breed details:", error);
+      infoDump.innerHTML = `<p>Failed to load breed details. Please try again.</p>`;
+    }
+  }
+
+
+//4.  Favorite Functionality 
+
+async function toggleFavorite(imgId) {
+    try {
+      const { data: favorites } = await axios.get('/favorites');
+      const existingFavorite = favorites.find((fav) => fav.image_id === imgId);
+  
+      if (existingFavorite) {
+        await axios.delete(`/favorites/${existingFavorite.id}`);
+        console.log(`Favorite removed for image ID: ${imgId}`);
+      } else {
+        await axios.post('/favorites', { image_id: imgId });
+        console.log(`Favorite added for image ID: ${imgId}`);
+      }
+    } catch (error) {
+      console.error("Error toggling favorite:", error);
+    }
+  }
+
+
+//5.  Favorites Button 
+
+async function displayFavorites() {
+    try {
+      const { data: favorites } = await axios.get('/favorites');
+      const images = favorites.map((fav) => fav.image);
+  
+      updateCarousel(images);
+    } catch (error) {
+      console.error("Error fetching favorites:", error);
+    }
+  }
+  
+  // Attach to the button
+  getFavoritesBtn.addEventListener("click", displayFavorites);
 
 
 
 
+
+  //6.  Progress Bar 
+
+  function updateProgress(event) {
+    if (event.lengthComputable) {
+      const percentComplete = (event.loaded / event.total) * 100;
+      progressBar.style.width = `${percentComplete}%`;
+    }
+  }
+
+
+
+  //7. Update Carousel
+  function updateCarousel(images) {
+    const carouselInner = document.getElementById("carouselInner");
+    carouselInner.innerHTML = "";
+    images.forEach((img, index) => {
+      const carouselItem = document.createElement("div");
+      carouselItem.classList.add("carousel-item");
+      if (index === 0) carouselItem.classList.add("active");
+  
+      carouselItem.innerHTML = `<img src="${img.url}" class="d-block w-100" alt="Cat image" />`;
+      carouselInner.appendChild(carouselItem);
+    });
+  }
 
 
 
