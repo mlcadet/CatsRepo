@@ -63,13 +63,7 @@ async function populateBreedDropdown() {
 //function createCarouselItem(imgSrc: any, imgAlt: any, imgId: any): any 
 //Carousel.createCarouselItem()
 
-// 2.  Axios Interceptors for Timing & Progress
-      //Add interceptors to log request-response time and manage UI feedback:
-      //Add Interceptors:
 
-    // 2.  Axios Interceptors for Timing & Progress
-      //Add interceptors to log request-response time and manage UI feedback:
-      //Add Interceptors:
 
 axios.interceptors.request.use((config) => {
     console.log(`Request started: ${config.url}`);
@@ -92,7 +86,7 @@ axios.interceptors.request.use((config) => {
     }
   );
   
-          //Handle Download Progress:
+          
   function updateProgress(event) {
     if (event.lengthComputable) {
       const percentComplete = (event.loaded / event.total) * 100;
@@ -116,8 +110,7 @@ axios.interceptors.request.use((config) => {
  *   send it manually with all of your requests! You can also set a default base URL!
  */
 
- //3.  Post Favorite:
-    //Implement toggling favorites using Axios POST/DELETE requests.
+ 
 
 export async function favorite(imgId) {
     try {
@@ -128,7 +121,7 @@ export async function favorite(imgId) {
     }
   }
   
-      //Toggle Modify the function to check if the image is already favorite
+
   
   export async function toggleFavorite(imgId) {
     try {
@@ -148,7 +141,7 @@ export async function favorite(imgId) {
   }
   
   
-  //Bind the heart icon to this function
+  
   
   document.querySelectorAll('.favorite-button').forEach((button) => {
     button.addEventListener('click', () => {
@@ -167,8 +160,7 @@ export async function favorite(imgId) {
  *   send it manually with all of your requests! You can also set a default base URL!
  */
 
-//4.  Display Favorites
-      // Create a function to fetch and display favorite images
+
 
       async function displayFavorites() {
         try {
@@ -189,7 +181,7 @@ export async function favorite(imgId) {
  */
 
 
-//5  Update Carousel Dynamically
+
 function updateCarousel(images) {
     carouselInner.innerHTML = '';
     images.forEach((img, index) => {
